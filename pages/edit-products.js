@@ -11,6 +11,8 @@ import {
     PageActions,
     TextField,
     Toast,
+    Button,
+    Thumbnail,
 } from '@shopify/polaris';
 import store from 'store-js';
 import gql from 'graphql-tag';
@@ -30,12 +32,30 @@ const UPDATE_PRICE = gql`
   }
 `;
 
+const UPDATE_IMAGE = gql`
+  mutation productImageUpdate($image: ImageInput!, $productId: ID!) {
+    productImageUpdate(image: $image, productId: $productId) {
+      image {
+        id
+        src
+        altText
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
 class EditProduct extends React.Component {
     state = {
         discount: '',
         price: '',
         variantId: '',
         showToast: false,
+        item: null,
+        processSrc: ''
     };
 
     componentDidMount() {
@@ -43,7 +63,7 @@ class EditProduct extends React.Component {
     }
 
     render() {
-        const { name, price, discount, variantId } = this.state;
+        const { name, price, discount, variantId, item, processSrc } = this.state;
 
         return (
             <Mutation
@@ -59,6 +79,26 @@ class EditProduct extends React.Component {
                             onDismiss={() => this.setState({ showToast: false })}
                         />
                     );
+
+                    const thumbnails = () => {
+                        if (item && item.images) {
+                            console.log(item.images);
+                            const thumbs = item.images.edges.map((edge, index) => <img
+                                key={index}
+                                src={edge.node.originalSrc}
+                                alt={edge.node.altText}
+                                width={120}
+                                height={120}
+                                onClick={() => {
+                                    console.log(edge.node.originalSrc);
+                                    this.setState({processSrc: edge.node.originalSrc})
+                                }}
+                            />)
+                            return thumbs;
+                        }
+                        return <></>;
+                    };
+
                     return (
                         <Frame>
                             <Page>
@@ -73,24 +113,12 @@ class EditProduct extends React.Component {
                                             <Card sectioned>
                                                 <FormLayout>
                                                     <FormLayout.Group>
-                                                        <TextField
-                                                            prefix="$"
-                                                            value={price}
-                                                            disabled={true}
-                                                            label="Original price"
-                                                            type="price"
-                                                        />
-                                                        <TextField
-                                                            prefix="$"
-                                                            value={discount}
-                                                            onChange={this.handleChange('discount')}
-                                                            label="Discounted price"
-                                                            type="discount"
-                                                        />
+                                                        {thumbnails()}
                                                     </FormLayout.Group>
                                                     <p>
-                                                        This sale price will expire in two weeks
+                                                        {(processSrc !== '') ? <img width="100%" src={processSrc}/> : <></>}
                                                     </p>
+                                                    <Button onClick={this.handleAutoLevel}>AutoLevel Image</Button>
                                                 </FormLayout>
                                             </Card>
                                             <PageActions
@@ -129,12 +157,18 @@ class EditProduct extends React.Component {
         return (value) => this.setState({ [field]: value });
     };
 
+    handleAutoLevel = () => {
+        const { processSrc } = this.state;
+        console.log(processSrc);
+    }
+
     itemToBeConsumed = () => {
         const item = store.get('item');
         const price = item.variants.edges[0].node.price;
         const variantId = item.variants.edges[0].node.id;
         const discounter = price * 0.1;
         this.setState({ price, variantId });
+        this.setState({item: item});
         return (price - discounter).toFixed(2);
     };
 }

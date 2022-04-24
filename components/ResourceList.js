@@ -20,15 +20,16 @@ const GET_PRODUCTS_BY_ID = gql`
         handle
         descriptionHtml
         id
-        images(first: 1) {
+        images(first: 99) {
           edges {
             node {
               originalSrc
               altText
+              id
             }
           }
         }
-        variants(first: 1) {
+        variants(first: 99) {
           edges {
             node {
               price

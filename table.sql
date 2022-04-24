@@ -21,7 +21,7 @@ CREATE TABLE "public"."shop" (
     "user_first_name" varchar(254) NOT NULL,
     "user_last_name" varchar(254) NOT NULL,
     "user_email" varchar(254) NOT NULL,
-    "locale" varchar(4) NOT NULL,
+    "locale" varchar(20) NOT NULL,
     "is_owner" bool NOT NULL,
     "is_collaborator" bool NOT NULL,
     "is_email_verified" bool NOT NULL,
