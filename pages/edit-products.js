@@ -1,4 +1,6 @@
 import React from 'react';
+import Router from 'next/router';
+
 import {
     Banner,
     Card,
@@ -18,20 +20,7 @@ import store from 'store-js';
 import gql from 'graphql-tag';
 import { Mutation } from 'react-apollo';
 import { base64Encode } from '../utils';
-
-const UPDATE_PRICE = gql`
-  mutation productVariantUpdate($input: ProductVariantInput!) {
-    productVariantUpdate(input: $input) {
-      product {
-        title
-      }
-      productVariant {
-        id
-        price
-      }
-    }
-  }
-`;
+import { Oval } from "react-loader-spinner";
 
 const UPDATE_IMAGE = gql`
   mutation productImageUpdate($image: ImageInput!, $productId: ID!) {
@@ -57,7 +46,8 @@ class EditProduct extends React.Component {
         altText: '',
         showToast: false,
         item: null,
-        processSrc: ''
+        processSrc: '',
+        loading: false,
     };
 
     componentDidMount() {
@@ -65,7 +55,7 @@ class EditProduct extends React.Component {
     }
 
     render() {
-        const { name, productId, imageId, src, altText, item, processSrc } = this.state;
+        const { name, productId, imageId, src, altText, item, processSrc, loading } = this.state;
 
         return (
             <Mutation
@@ -84,7 +74,7 @@ class EditProduct extends React.Component {
 
                     const thumbnails = () => {
                         if (item && item.images) {
-                            console.log(item.images);
+                            //console.log(item.images);
                             const thumbs = item.images.edges.map((edge, index) => <img
                                 key={index}
                                 src={edge.node.originalSrc}
@@ -108,7 +98,16 @@ class EditProduct extends React.Component {
                     };
 
                     const isProcessDisabled = () => {
-                        return processSrc.includes('processSrc=');
+                        return processSrc.includes('google');
+                    }
+
+                    const spinner = () => {
+                        return loading ? 
+                        <Oval
+                            color="#00BFFF"
+                            height={40}
+                            width={40}
+                        /> : <></>;
                     }
 
                     return (
@@ -130,33 +129,44 @@ class EditProduct extends React.Component {
                                                     <p>
                                                         {(processSrc !== '') ? <img width="100%" src={processSrc}/> : <></>}
                                                     </p>
-                                                    <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>AutoLevel Image</Button>
+                                                    {spinner()}
+                                                    <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>Adjust level</Button>
+                                                     
                                                 </FormLayout>
                                             </Card>
                                             <PageActions
                                                 primaryAction={[
                                                     {
                                                         content: 'Save',
-                                                        onAction: () => {
+                                                        onAction: async () => {
                                                             if (processSrc.includes('google')) {
-                                                                const image = {
-                                                                    id: imageId,
-                                                                    src: processSrc,
-                                                                    altText: altText || ''
-                                                                };
-                                                                handleSubmit({
-                                                                    variables: { 
-                                                                        image: image,
-                                                                        productId: productId,
-                                                                    },
-                                                                });
+                                                                try {
+                                                                    this.setState({loading: true});
+                                                                    const image = {
+                                                                        id: imageId,
+                                                                        src: processSrc,
+                                                                        altText: altText || ''
+                                                                    };
+                                                                    await handleSubmit({
+                                                                        variables: { 
+                                                                            image: image,
+                                                                            productId: productId,
+                                                                        },
+                                                                    });
+                                                                    Router.back();
+                                                                } finally {
+                                                                    this.setState({loading: false});
+                                                                }   
                                                             }
                                                         }
                                                     }
                                                 ]}
                                                 secondaryActions={[
                                                     {
-                                                        content: 'Back'
+                                                        content: 'Back',
+                                                        onAction: () => {
+                                                            Router.back();
+                                                        }
                                                     }
                                                 ]}
                                             />
@@ -176,14 +186,19 @@ class EditProduct extends React.Component {
     };
 
     handleAutoLevel = async () => {
-        const { processSrc } = this.state;
-        const response = await fetch(`/api/process-image/${encodeURIComponent(base64Encode(processSrc))}`,
-        {
-            headers: {'Content-Type': 'application/json'}
-        });
-        const responseJson = await response.json();
-        console.log(responseJson.image);
-        this.setState({processSrc: responseJson.image});
+        try {
+            this.setState({loading: true});
+            const { processSrc } = this.state;
+            const response = await fetch(`/api/process-image/${encodeURIComponent(base64Encode(processSrc))}`,
+            {
+                headers: {'Content-Type': 'application/json'}
+            });
+            const responseJson = await response.json();
+            this.setState({processSrc: responseJson.image});
+        } finally {
+            this.setState({loading: false});
+        }
+        
     }
 
     itemToBeConsumed = () => {
