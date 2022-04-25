@@ -14,7 +14,7 @@ class Index extends React.Component {
     return (
       <Page>
         <TitleBar
-          title="Complete App Example"
+          title="AutoLevel App"
           primaryAction={{
             content: "Select products",
             onAction: () => this.setState({ open: true }),

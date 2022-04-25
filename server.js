@@ -30,6 +30,7 @@ app.prepare().then(() => {
   server.use(session({ secure: true, sameSite: "none" }, server));
   server.keys = [SHOPIFY_API_SECRET_KEY];
 
+
   server.use(
     // Gets called on installation & when a customer does not have a session
     createShopifyAuth({
@@ -103,6 +104,7 @@ app.prepare().then(() => {
 
   server.use(graphQLProxy({ version: ApiVersion.October19 }));
   server.use(verifyRequest());
+
   server.use(async (ctx) => {
     await handle(ctx.req, ctx.res);
     ctx.respond = false;

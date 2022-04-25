@@ -17,6 +17,7 @@ import {
 import store from 'store-js';
 import gql from 'graphql-tag';
 import { Mutation } from 'react-apollo';
+import { base64Encode } from '../utils';
 
 const UPDATE_PRICE = gql`
   mutation productVariantUpdate($input: ProductVariantInput!) {
@@ -50,24 +51,25 @@ const UPDATE_IMAGE = gql`
 
 class EditProduct extends React.Component {
     state = {
-        discount: '',
-        price: '',
-        variantId: '',
+        productId: '',
+        imageId: '',
+        src: '',
+        altText: '',
         showToast: false,
         item: null,
         processSrc: ''
     };
 
     componentDidMount() {
-        this.setState({ discount: this.itemToBeConsumed() });
+        this.itemToBeConsumed()
     }
 
     render() {
-        const { name, price, discount, variantId, item, processSrc } = this.state;
+        const { name, productId, imageId, src, altText, item, processSrc } = this.state;
 
         return (
             <Mutation
-                mutation={UPDATE_PRICE}
+                mutation={UPDATE_IMAGE}
             >
                 {(handleSubmit, {error, data}) => {
                     const showError = error && (
@@ -91,13 +93,23 @@ class EditProduct extends React.Component {
                                 height={120}
                                 onClick={() => {
                                     console.log(edge.node.originalSrc);
-                                    this.setState({processSrc: edge.node.originalSrc})
+                                    this.setState({
+                                        productId: item.id,
+                                        imageId: edge.node.id,
+                                        altText: edge.node.altText,
+                                        processSrc: edge.node.originalSrc,
+                                        src: edge.node.originalSrc
+                                    });
                                 }}
                             />)
                             return thumbs;
                         }
                         return <></>;
                     };
+
+                    const isProcessDisabled = () => {
+                        return processSrc.includes('processSrc=');
+                    }
 
                     return (
                         <Frame>
@@ -118,7 +130,7 @@ class EditProduct extends React.Component {
                                                     <p>
                                                         {(processSrc !== '') ? <img width="100%" src={processSrc}/> : <></>}
                                                     </p>
-                                                    <Button onClick={this.handleAutoLevel}>AutoLevel Image</Button>
+                                                    <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>AutoLevel Image</Button>
                                                 </FormLayout>
                                             </Card>
                                             <PageActions
@@ -126,19 +138,25 @@ class EditProduct extends React.Component {
                                                     {
                                                         content: 'Save',
                                                         onAction: () => {
-                                                            const productVariableInput = {
-                                                                id: variantId,
-                                                                price: discount,
-                                                            };
-                                                            handleSubmit({
-                                                                variables: { input: productVariableInput },
-                                                            });
+                                                            if (processSrc.includes('google')) {
+                                                                const image = {
+                                                                    id: imageId,
+                                                                    src: processSrc,
+                                                                    altText: altText || ''
+                                                                };
+                                                                handleSubmit({
+                                                                    variables: { 
+                                                                        image: image,
+                                                                        productId: productId,
+                                                                    },
+                                                                });
+                                                            }
                                                         }
                                                     }
                                                 ]}
                                                 secondaryActions={[
                                                     {
-                                                        content: 'Remove discount'
+                                                        content: 'Back'
                                                     }
                                                 ]}
                                             />
@@ -157,19 +175,20 @@ class EditProduct extends React.Component {
         return (value) => this.setState({ [field]: value });
     };
 
-    handleAutoLevel = () => {
+    handleAutoLevel = async () => {
         const { processSrc } = this.state;
-        console.log(processSrc);
+        const response = await fetch(`/api/process-image/${encodeURIComponent(base64Encode(processSrc))}`,
+        {
+            headers: {'Content-Type': 'application/json'}
+        });
+        const responseJson = await response.json();
+        console.log(responseJson.image);
+        this.setState({processSrc: responseJson.image});
     }
 
     itemToBeConsumed = () => {
         const item = store.get('item');
-        const price = item.variants.edges[0].node.price;
-        const variantId = item.variants.edges[0].node.id;
-        const discounter = price * 0.1;
-        this.setState({ price, variantId });
-        this.setState({item: item});
-        return (price - discounter).toFixed(2);
+        this.setState({ productId: item.id, item: item});
     };
 }
 
