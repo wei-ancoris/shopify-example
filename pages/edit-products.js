@@ -18,7 +18,7 @@ import {
 import store from 'store-js';
 import gql from 'graphql-tag';
 import { Mutation } from 'react-apollo';
-import { base64Encode } from '../utils';
+import { base64Encode, downloadImage } from '../utils';
 import { Oval } from "react-loader-spinner";
 
 const UPDATE_IMAGE = gql`
@@ -74,6 +74,7 @@ class EditProduct extends React.Component {
                     const thumbnails = () => {
                         if (item && item.images) {
                             //console.log(item.images);
+                            console.log( item.images.edges);
                             const thumbs = item.images.edges.map((edge, index) => <img
                                 key={index}
                                 src={edge.node.originalSrc}
@@ -81,7 +82,6 @@ class EditProduct extends React.Component {
                                 width={120}
                                 height={120}
                                 onClick={() => {
-                                    console.log(edge.node.originalSrc);
                                     this.setState({
                                         productId: item.id,
                                         imageId: edge.node.id,
@@ -97,7 +97,7 @@ class EditProduct extends React.Component {
                     };
 
                     const isProcessDisabled = () => {
-                        return processSrc.includes('google');
+                        return processSrc === '' || processSrc.includes('google');
                     }
 
                     const spinner = () => {
@@ -108,6 +108,8 @@ class EditProduct extends React.Component {
                             width={24}
                         /> : <></>;
                     }
+
+                    
 
                     return (
                         <Frame>
@@ -128,9 +130,20 @@ class EditProduct extends React.Component {
                                                     <p>
                                                         {(processSrc !== '') ? <img width="100%" src={processSrc}/> : <></>}
                                                     </p>
+                                                    <p>
+                                                        <ol>
+                                                            <li>Select a image</li>
+                                                            <li>Click Download button if you wish to make a backup the original image (optional)</li>
+                                                            <li>Select a image and click "Preview" button</li>#
+                                                            <li>Click "Save" button to save the change of the current image to product</li>
+                                                        </ol>
+                                                    </p>
                                                     <Stack>
                                                         <Stack.Item>
                                                             <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>Preview</Button>
+                                                        </Stack.Item>
+                                                        <Stack.Item>
+                                                            <Button onClick={this.handleDownload} disabled={processSrc === ''}>Download</Button>
                                                         </Stack.Item>
                                                         <Stack.Item>
                                                             {spinner()}
@@ -157,7 +170,15 @@ class EditProduct extends React.Component {
                                                                             productId: productId,
                                                                         },
                                                                     });
-                                                                    Router.back();
+                                                                    for(let i = 0; i < item.images.edges.length; i++) {
+                                                                        if (item.images.edges[i].node.id === imageId) {
+                                                                            item.images.edges[i].node.originalSrc = processSrc;
+                                                                            this.setState({item: item});
+                                                                            store.set('item', item);
+                                                                            window.location.reload();
+                                                                            break;
+                                                                        }
+                                                                    }
                                                                 } finally {
                                                                     this.setState({loading: false});
                                                                 }   
@@ -188,6 +209,10 @@ class EditProduct extends React.Component {
     handleChange = (field) => {
         return (value) => this.setState({ [field]: value });
     };
+
+    handleDownload = () => {
+        downloadImage(this.state.processSrc, 'download.jpg');
+    }
 
     handleAutoLevel = async () => {
         try {
