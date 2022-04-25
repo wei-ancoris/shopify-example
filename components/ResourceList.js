@@ -103,12 +103,6 @@ class ResourceListWithProducts extends React.Component {
                                                         </TextStyle>
                                                     </h3>
                                                 </Stack.Item>
-                                                <Stack.Item>
-                                                    <p>${price}</p>
-                                                </Stack.Item>
-                                                <Stack.Item>
-                                                    <p>Expires on {twoWeeksFromNow} </p>
-                                                </Stack.Item>
                                             </Stack>
                                         </ResourceList.Item>
                                     );

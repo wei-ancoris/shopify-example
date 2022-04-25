@@ -11,10 +11,9 @@ import {
     Layout,
     Page,
     PageActions,
-    TextField,
     Toast,
     Button,
-    Thumbnail,
+    Stack,
 } from '@shopify/polaris';
 import store from 'store-js';
 import gql from 'graphql-tag';
@@ -104,9 +103,9 @@ class EditProduct extends React.Component {
                     const spinner = () => {
                         return loading ? 
                         <Oval
-                            color="#00BFFF"
-                            height={40}
-                            width={40}
+                            color="#008060"
+                            height={24}
+                            width={24}
                         /> : <></>;
                     }
 
@@ -129,9 +128,14 @@ class EditProduct extends React.Component {
                                                     <p>
                                                         {(processSrc !== '') ? <img width="100%" src={processSrc}/> : <></>}
                                                     </p>
-                                                    {spinner()}
-                                                    <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>Adjust level</Button>
-                                                     
+                                                    <Stack>
+                                                        <Stack.Item>
+                                                            <Button onClick={this.handleAutoLevel} disabled={isProcessDisabled()}>Preview</Button>
+                                                        </Stack.Item>
+                                                        <Stack.Item>
+                                                            {spinner()}
+                                                        </Stack.Item>
+                                                    </Stack>
                                                 </FormLayout>
                                             </Card>
                                             <PageActions

@@ -14,7 +14,7 @@ class Index extends React.Component {
     return (
       <Page>
         <TitleBar
-          title="AutoLevel App"
+          title="AutoLevel"
           primaryAction={{
             content: "Select products",
             onAction: () => this.setState({ open: true }),
@@ -37,7 +37,7 @@ class Index extends React.Component {
               }}
               image={img}
             >
-              <p>Select products to change their price temporarily.</p>
+              <p>Select products to change their images</p>
             </EmptyState>
           </Layout>
         ) : (
