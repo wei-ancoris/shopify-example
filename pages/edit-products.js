@@ -134,7 +134,7 @@ class EditProduct extends React.Component {
                                                         <ol>
                                                             <li>Select a image</li>
                                                             <li>Click Download button if you wish to make a backup the original image (optional)</li>
-                                                            <li>Select a image and click "Preview" button</li>#
+                                                            <li>Select a image and click "Preview" button</li>
                                                             <li>Click "Save" button to save the change of the current image to product</li>
                                                         </ol>
                                                     </p>
